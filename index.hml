@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D3syDev // Daniil Vavilov</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      /* Dark Blue & Black Theme */
+      --bg: #03050a;
+      --grid: rgba(37, 99, 235, 0.14);
+      --glow: rgba(29, 78, 216, 0.22);
+      --card: rgba(9, 14, 26, 0.88);
+      --border: rgba(59, 130, 246, 0.28);
+      --border-active: #60a5fa;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --surface: rgba(15, 23, 42, 0.65);
+      --trail: 59, 130, 246;
+    }
+
+    [data-theme="yellow"] {
+      /* Yellow & White Theme */
+      --bg: #fefce8;
+      --grid: rgba(202, 138, 4, 0.15);
+      --glow: rgba(250, 204, 21, 0.3);
+      --card: rgba(255, 255, 255, 0.94);
+      --border: rgba(202, 138, 4, 0.35);
+      --border-active: #ca8a04;
+      --accent: #eab308;
+      --accent-light: #ca8a04;
+      --text: #18181b;
+      --muted: #3f3f46;
+      --dim: #71717a;
+      --surface: rgba(254, 249, 195, 0.6);
+      --trail: 234, 179, 8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      cursor: grab;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.grabbing {
+      cursor: grabbing;
+    }
+
+    #trail {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 50% 45%, var(--glow) 0%, transparent 65%),
+        linear-gradient(to right, var(--grid) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top HUD */
+    .hud {
+      position: fixed;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      pointer-events: none;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      box-shadow: 0 0 10px var(--accent-light);
+      animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--border-active);
+      transform: translateY(-1px);
+    }
+
+    /* Canvas World */
+    #world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      z-index: 10;
+    }
+
+    .card {
+      position: absolute;
+      width: 340px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
+      cursor: move;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
+    }
+
+    .card:hover {
+      border-color: var(--border-active);
+      box-shadow: 0 18px 42px var(--glow);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.8px;
+    }
+
+    .tag {
+      color: var(--accent-light);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .name-sub {
+      font-size: 13px;
+      color: var(--dim);
+      margin-bottom: 10px;
+    }
+
+    .role {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-light);
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .box:last-child {
+      margin-bottom: 0;
+    }
+
+    .box-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .status {
+      font-size: 10px;
+      color: var(--accent-light);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .link-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .link-btn:hover {
+      border-color: var(--border-active);
+      transform: translateX(4px);
+    }
+
+    .handle {
+      color: var(--accent-light);
+      font-size: 12px;
+    }
+
+    /* Bottom Terminal */
+    .terminal {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(680px, 94vw);
+      background: var(--card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      border-radius: 12px;
+      padding: 12px 16px;
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .term-log {
+      font-size: 12px;
+      color: var(--muted);
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .term-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .prompt {
+      color: var(--accent-light);
+      font-weight: 700;
+    }
+
+    #cmd {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      user-select: text;
+    }
+
+    .ff-wrap {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin: 6px 0;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .ff-art {
+      font-size: 10px;
+      line-height: 1.15;
+      color: var(--accent-light);
+      white-space: pre;
+      font-weight: 700;
+    }
+
+    .ff-info {
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+
+    .ff-key {
+      color: var(--accent-light);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="trail"></canvas>
+  <div id="grid-bg"></div>
+
+  <!-- Top HUD -->
+  <div class="hud">
+    <div class="pill">
+      <span class="dot"></span>
+      <span><strong>D3syDev</strong> // wlwm canvas</span>
+    </div>
+    <div class="pill">
+      <span id="hud-info">100% | X: 0 Y: 0</span>
+      <button class="btn" id="theme-btn" onclick="switchTheme()">Theme: Dark Blue</button>
+      <button class="btn" onclick="arrangeCards()">Re-arrange</button>
+      <button class="btn" onclick="resetCamera()">Reset View</button>
+    </div>
+  </div>
+
+  <!-- Infinite Workspace -->
+  <div id="world">
+    <!-- 1. Identity -->
+    <div class="card" data-slot="0">
+      <div class="card-top">
+        <span>01 // IDENTITY</span>
+        <span class="tag">16 Y.O.</span>
+      </div>
+      <h1>D3syDev</h1>
+      <div class="name-sub">Daniil Vavilov</div>
+      <div class="role">Rust & Wayland Systems Dev</div>
+      <p>
+        Создаю лёгкие консольные утилиты и планирую собственный Wayland-композитор с бесконечным холстом. Фокус на Rust, NixOS и минимализме.
+      </p>
+    </div>
+
+    <!-- 2. Projects -->
+    <div class="card" data-slot="1">
+      <div class="card-top">
+        <span>02 // WORKSPACE</span>
+        <span class="tag">PROJECTS</span>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>wlwm</span>
+          <span class="status">PLANNED // RUST</span>
+        </div>
+        <p>Минималистичный Wayland-композитор с навигацией Infinite Canvas, вдохновлённый dwm.</p>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>CLI System Tools</span>
+          <span class="status">PLANNED</span>
+        </div>
+        <p>Быстрые консольные тулзы на Rust для повседневной работы в Linux и NixOS.</p>
+      </div>
+    </div>
+
+    <!-- 3. Contacts -->
+    <div class="card" data-slot="2">
+      <div class="card-top">
+        <span>03 // NETWORK</span>
+        <span class="tag">CONTACTS</span>
+      </div>
+      <div class="links">
+        <a href="https://github.com/d3sydev" target="_blank" class="link-btn">
+          <span>GitHub</span>
+          <span class="handle">@d3sydev ↗</span>
+        </a>
+        <a href="https://t.me/d3sydev" target="_blank" class="link-btn">
+          <span>Telegram</span>
+          <span class="handle">@d3sydev ↗</span>
+        </a>
+        <div class="link-btn" onclick="copyDC()">
+          <span>Discord</span>
+          <span class="handle" id="dc-text">@d3sydev (copy)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Tech Stack -->
+    <div class="card" data-slot="3">
+      <div class="card-top">
+        <span>04 // ENVIRONMENT</span>
+        <span class="tag">STACK</span>
+      </div>
+      <p>Инструменты и технологии, которые изучаю и использую:</p>
+      <div class="chips">
+        <span class="chip">Rust</span>
+        <span class="chip">Wayland</span>
+        <span class="chip">wlroots</span>
+        <span class="chip">NixOS</span>
+        <span class="chip">Linux</span>
+        <span class="chip">Git</span>
+        <span class="chip">Zed</span>
+      </div>
+    </div>
+
+    <!-- 5. Hall of Fame / Respect -->
+    <div class="card" data-slot="4">
+      <div class="card-top">
+        <span>05 // HALL OF FAME</span>
+        <span class="tag">RESPECT</span>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>★ Tup1sm</span>
+          <span class="status">RESPECT</span>
+        </div>
+        <p>Большой вклад и помощь на старте пути.</p>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>★ sapphirexd</span>
+          <span class="status">RESPECT</span>
+        </div>
+        <p>Поддержка, советы и помощь в развитии.</p>
+      </div>
+    </div>
+
+    <!-- 6. Inner Circle / Close Friends -->
+    <div class="card" data-slot="5">
+      <div class="card-top">
+        <span>06 // INNER CIRCLE</span>
+        <span class="tag">CLOSE FRIENDS</span>
+      </div>
+      <p style="margin-bottom: 10px;">Те, кто всегда рядом, помогает с мыслями и поддерживает мой путь:</p>
+      <div class="box">
+        <div class="box-head">
+          <span>◆ Tup1sm</span>
+          <span class="status">DAY ONE</span>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>◆ voxelsy</span>
+          <span class="status">BRO</span>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-head">
+          <span>◆ sapphirexd</span>
+          <span class="status">BRO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="terminal">
+    <div class="term-log" id="log">
+      wlwm-shell v0.5 // Введи <span style="color:var(--accent-light)">help</span> или <span style="color:var(--accent-light)">fastfetch</span>. Колёсико — зум, ЛКМ — двигать холст и окна.
+    </div>
+    <div class="term-row">
+      <span class="prompt">d3sydev@nixos:~$</span>
+      <input type="text" id="cmd" placeholder="введи команду..." autocomplete="off" />
+    </div>
+  </div>
+
+  <script>
+    // 1. Auto-arrange cards cleanly without overlapping
+    const cards = document.querySelectorAll('.card');
+    function arrangeCards() {
+      const gap = 24;
+      const cardW = 340;
+      const cols = window.innerWidth > 1150 ? 3 : (window.innerWidth > 760 ? 2 : 1);
+      const totalW = cols * cardW + (cols - 1) * gap;
+      const startX = Math.max(24, (window.innerWidth - totalW) / 2);
+      const startY = 82;
+
+      const colHeights = new Array(cols).fill(startY);
+
+      cards.forEach((card, i) => {
+        const col = i % cols;
+        card.style.left = `${startX + col * (cardW + gap)}px`;
+        card.style.top = `${colHeights[col]}px`;
+        colHeights[col] += card.offsetHeight + gap;
+      });
+    }
+    window.addEventListener('load', arrangeCards);
+
+    // 2. Theme Toggle
+    let yellowMode = false;
+    function switchTheme() {
+      yellowMode = !yellowMode;
+      const btn = document.getElementById('theme-btn');
+      if (yellowMode) {
+        document.documentElement.setAttribute('data-theme', 'yellow');
+        btn.textContent = 'Theme: Yellow White';
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        btn.textContent = 'Theme: Dark Blue';
+      }
+    }
+
+    // 3. Copy Discord
+    function copyDC() {
+      navigator.clipboard.writeText('d3sydev');
+      const el = document.getElementById('dc-text');
+      el.textContent = 'Скопировано!';
+      setTimeout(() => el.textContent = '@d3sydev (copy)', 1500);
+    }
+
+    // 4. Infinite Canvas Pan & Wheel Zoom
+    const world = document.getElementById('world');
+    const bg = document.getElementById('grid-bg');
+    const hudInfo = document.getElementById('hud-info');
+
+    let camX = 0, camY = 0, scale = 1;
+    let panning = false, startPanX = 0, startPanY = 0;
+
+    function updateCamera() {
+      world.style.transform = `translate(${camX}px, ${camY}px) scale(${scale})`;
+      const gridSize = 40 * scale;
+      bg.style.backgroundSize = `100% 100%, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`;
+      bg.style.backgroundPosition = `center, ${camX}px ${camY}px, ${camX}px ${camY}px`;
+      hudInfo.textContent = `${Math.round(scale * 100)}% | X: ${Math.round(camX)} Y: ${Math.round(camY)}`;
+    }
+
+    function resetCamera() {
+      camX = 0;
+      camY = 0;
+      scale = 1;
+      updateCamera();
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.card') || e.target.closest('.hud') || e.target.closest('.terminal')) return;
+      panning = true;
+      document.body.classList.add('grabbing');
+      startPanX = e.clientX - camX;
+      startPanY = e.clientY - camY;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!panning) return;
+      camX = e.clientX - startPanX;
+      camY = e.clientY - startPanY;
+      updateCamera();
+    });
+
+    document.addEventListener('mouseup', () => {
+      panning = false;
+      document.body.classList.remove('grabbing');
+    });
+
+    document.addEventListener('wheel', (e) => {
+      if (e.target.closest('.term-log')) return;
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      const newScale = Math.min(Math.max(scale * zoomFactor, 0.45), 2.2);
+
+      camX = e.clientX - (e.clientX - camX) * (newScale / scale);
+      camY = e.clientY - (e.clientY - camY) * (newScale / scale);
+      scale = newScale;
+      updateCamera();
+    }, { passive: false });
+
+    // 5. Drag Cards (Zoom-aware)
+    let draggedCard = null, dragStartX = 0, dragStartY = 0, cardStartLeft = 0, cardStartTop = 0, zTop = 20;
+
+    cards.forEach(card => {
+      card.addEventListener('mousedown', (e) => {
+        if (e.target.closest('a') || e.target.closest('.link-btn')) return;
+        draggedCard = card;
+        zTop++;
+        card.style.zIndex = zTop;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        cardStartLeft = parseFloat(card.style.left) || 0;
+        cardStartTop = parseFloat(card.style.top) || 0;
+      });
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!draggedCard) return;
+      const dx = (e.clientX - dragStartX) / scale;
+      const dy = (e.clientY - dragStartY) / scale;
+      draggedCard.style.left = `${cardStartLeft + dx}px`;
+      draggedCard.style.top = `${cardStartTop + dy}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      draggedCard = null;
+    });
+
+    // 6. Smooth Cursor Trail
+    const trailCanvas = document.getElementById('trail');
+    const ctx = trailCanvas.getContext('2d');
+    const trailPoints = [];
+
+    function fitTrail() {
+      trailCanvas.width = window.innerWidth;
+      trailCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', fitTrail);
+    fitTrail();
+
+    window.addEventListener('mousemove', (e) => {
+      trailPoints.push({ x: e.clientX, y: e.clientY, life: 1 });
+    });
+
+    function renderTrail() {
+      ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+      const rgb = getComputedStyle(document.documentElement).getPropertyValue('--trail').trim();
+
+      for (let i = 0; i < trailPoints.length; i++) {
+        const p = trailPoints[i];
+        p.life -= 0.045;
+        if (p.life <= 0) {
+          trailPoints.splice(i, 1);
+          i--;
+          continue;
+        }
+        if (i > 0) {
+          const prev = trailPoints[i - 1];
+          ctx.beginPath();
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.strokeStyle = `rgba(${rgb}, ${p.life * 0.7})`;
+          ctx.lineWidth = p.life * 5;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+      }
+      requestAnimationFrame(renderTrail);
+    }
+    renderTrail();
+
+    // 7. Terminal Commands
+    const cmd = document.getElementById('cmd');
+    const log = document.getElementById('log');
+
+    const fastfetchHTML = `
+      <div class="ff-wrap">
+        <div class="ff-art">██████╗ 
+██╔══██╗
+██║  ██║
+██║  ██║
+██████╔╝
+╚═════╝ </div>
+        <div class="ff-info">
+          <div><span class="ff-key">d3sydev@nixos</span></div>
+          <div>--------------</div>
+          <div><span class="ff-key">OS:</span> NixOS (Target)</div>
+          <div><span class="ff-key">WM:</span> wlwm (Planned)</div>
+          <div><span class="ff-key">Editor:</span> Zed</div>
+          <div><span class="ff-key">Langs:</span> Rust, C</div>
+        </div>
+      </div>
+    `;
+
+    const cmds = {
+      help: 'Команды: <span style="color:var(--accent-light)">fastfetch</span>, <span style="color:var(--accent-light)">whoami</span>, <span style="color:var(--accent-light)">projects</span>, <span style="color:var(--accent-light)">socials</span>, <span style="color:var(--accent-light)">friends</span>, <span style="color:var(--accent-light)">honor</span>, <span style="color:var(--accent-light)">theme</span>, <span style="color:var(--accent-light)">reset</span>, <span style="color:var(--accent-light)">clear</span>',
+      whoami: 'D3syDev (Даниил Вавилов, 16) — Rust & Wayland разработчик.',
+      projects: 'wlwm (Wayland Infinite Canvas WM — в планах) и консольные тулзы на Rust.',
+      socials: 'GitHub: <a href="https://github.com/d3sydev" target="_blank" style="color:var(--accent-light)">github.com/d3sydev</a> | Telegram: <a href="https://t.me/d3sydev" target="_blank" style="color:var(--accent-light)">t.me/d3sydev</a> | Discord: <span style="color:var(--accent-light)">@d3sydev</span>',
+      friends: 'Близкие кенты: Tup1sm, voxelsy, sb0ne, sapphirexd.',
+      honor: 'Respect: Tup1sm, sapphirexd — спасибо за вклад и поддержку!',
+      theme: 'Тема переключена.',
+      reset: 'Камера и карточки возвращены в исходное положение.'
+    };
+
+    cmd.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const val = cmd.value.trim().toLowerCase();
+      cmd.value = '';
+      if (!val) return;
+      if (val === 'clear') { log.innerHTML = ''; return; }
+      if (val === 'theme') switchTheme();
+      if (val === 'reset') { resetCamera(); arrangeCards(); }
+
+      if (val === 'fastfetch') {
+        log.innerHTML += `<div><span style="color:var(--accent-light)">$ fastfetch</span></div>${fastfetchHTML}`;
+        log.scrollTop = log.scrollHeight;
+        return;
+      }
+
+      const ans = cmds[val] || `Неизвестная команда: ${val}. Напиши <span style="color:var(--accent-light)">help</span>.`;
+      log.innerHTML += `<div><span style="color:var(--accent-light)">$ ${val}</span> — ${ans}</div>`;
+      log.scrollTop = log.scrollHeight;
+    });
+  </script>
+</body>
+</html>
