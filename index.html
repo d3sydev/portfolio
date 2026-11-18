@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>D3syDev // Daniil Vavilov</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -46,6 +46,8 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
     }
 
     body {
@@ -85,15 +87,15 @@
     /* Top HUD */
     .hud {
       position: fixed;
-      top: 16px;
-      left: 20px;
-      right: 20px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 100;
       pointer-events: none;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -101,13 +103,13 @@
       pointer-events: auto;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
+      gap: 8px;
+      padding: 7px 12px;
       border-radius: 999px;
       background: var(--card);
       border: 1px solid var(--border);
       backdrop-filter: blur(12px);
-      font-size: 12px;
+      font-size: 11px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     }
 
@@ -132,15 +134,14 @@
       font-family: inherit;
       font-size: 11px;
       font-weight: 700;
-      padding: 5px 11px;
+      padding: 5px 10px;
       border-radius: 999px;
       cursor: pointer;
       transition: 0.2s;
     }
 
-    .btn:hover {
+    .btn:hover, .btn:active {
       border-color: var(--border-active);
-      transform: translateY(-1px);
     }
 
     /* Canvas World */
@@ -154,12 +155,12 @@
 
     .card {
       position: absolute;
-      width: 340px;
+      width: min(340px, 88vw);
       background: var(--card);
       border: 1px solid var(--border);
       backdrop-filter: blur(14px);
       border-radius: 14px;
-      padding: 18px;
+      padding: 16px;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
       cursor: move;
       transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
@@ -192,7 +193,7 @@
     }
 
     h1 {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
       line-height: 1.1;
       margin-bottom: 4px;
@@ -212,7 +213,7 @@
     }
 
     p {
-      font-size: 12.5px;
+      font-size: 12px;
       line-height: 1.55;
       color: var(--muted);
     }
@@ -235,7 +236,7 @@
       align-items: center;
       font-size: 13px;
       font-weight: 700;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
 
     .status {
@@ -249,14 +250,14 @@
     .chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 7px;
+      gap: 6px;
       margin-top: 10px;
     }
 
     .chip {
       font-size: 11px;
       font-weight: 700;
-      padding: 5px 10px;
+      padding: 5px 9px;
       border-radius: 7px;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -284,7 +285,7 @@
       transition: 0.2s;
     }
 
-    .link-btn:hover {
+    .link-btn:hover, .link-btn:active {
       border-color: var(--border-active);
       transform: translateX(4px);
     }
@@ -297,26 +298,36 @@
     /* Bottom Terminal */
     .terminal {
       position: fixed;
-      bottom: 16px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
-      width: min(680px, 94vw);
+      width: min(650px, 94vw);
       background: var(--card);
       border: 1px solid var(--border);
       backdrop-filter: blur(14px);
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       z-index: 100;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     }
 
     .term-log {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
-      max-height: 120px;
+      max-height: 90px;
       overflow-y: auto;
+      touch-action: pan-y;
       margin-bottom: 8px;
-      line-height: 1.5;
+      line-height: 1.45;
+    }
+
+    .term-log pre {
+      font-family: inherit;
+      font-size: 10.5px;
+      line-height: 1.2;
+      color: var(--accent-light);
+      margin: 4px 0;
+      overflow-x: auto;
     }
 
     .term-row {
@@ -340,35 +351,33 @@
       font-family: inherit;
       font-size: 13px;
       user-select: text;
+      -webkit-user-select: text;
+      touch-action: auto;
     }
 
-    .ff-wrap {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      margin: 6px 0;
-      padding: 8px 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-
-    .ff-art {
-      font-size: 10px;
-      line-height: 1.15;
-      color: var(--accent-light);
-      white-space: pre;
-      font-weight: 700;
-    }
-
-    .ff-info {
-      font-size: 11.5px;
-      line-height: 1.45;
-    }
-
-    .ff-key {
-      color: var(--accent-light);
-      font-weight: 700;
+    @media (max-width: 600px) {
+      .hud {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+      }
+      .pill {
+        padding: 6px 10px;
+        font-size: 10px;
+        gap: 6px;
+      }
+      .btn {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      .terminal {
+        bottom: 8px;
+        padding: 8px 12px;
+      }
+      .term-log {
+        max-height: 70px;
+        font-size: 11px;
+      }
     }
   </style>
 </head>
@@ -384,17 +393,17 @@
       <span><strong>D3syDev</strong> // wlwm canvas</span>
     </div>
     <div class="pill">
-      <span id="hud-info">100% | X: 0 Y: 0</span>
-      <button class="btn" id="theme-btn" onclick="switchTheme()">Theme: Dark Blue</button>
-      <button class="btn" onclick="arrangeCards()">Re-arrange</button>
-      <button class="btn" onclick="resetCamera()">Reset View</button>
+      <span id="hud-info">100%</span>
+      <button class="btn" id="theme-btn" onclick="switchTheme()">Dark Blue</button>
+      <button class="btn" onclick="arrangeCards()">Grid</button>
+      <button class="btn" onclick="resetCamera()">Reset</button>
     </div>
   </div>
 
   <!-- Infinite Workspace -->
   <div id="world">
     <!-- 1. Identity -->
-    <div class="card" data-slot="0">
+    <div class="card">
       <div class="card-top">
         <span>01 // IDENTITY</span>
         <span class="tag">16 Y.O.</span>
@@ -403,12 +412,12 @@
       <div class="name-sub">Daniil Vavilov</div>
       <div class="role">Rust & Wayland Systems Dev</div>
       <p>
-        Создаю лёгкие консольные утилиты и планирую собственный Wayland-композитор с бесконечным холстом. Фокус на Rust, NixOS и минимализме.
+        Building lightweight CLI tools and a custom spatial Wayland compositor (wlwm). Focused on Rust, NixOS, and zero-bloat minimalism.
       </p>
     </div>
 
     <!-- 2. Projects -->
-    <div class="card" data-slot="1">
+    <div class="card">
       <div class="card-top">
         <span>02 // WORKSPACE</span>
         <span class="tag">PROJECTS</span>
@@ -418,19 +427,19 @@
           <span>wlwm</span>
           <span class="status">PLANNED // RUST</span>
         </div>
-        <p>Минималистичный Wayland-композитор с навигацией Infinite Canvas, вдохновлённый dwm.</p>
+        <p>Minimalist Wayland compositor with Infinite Canvas spatial navigation inspired by dwm.</p>
       </div>
       <div class="box">
         <div class="box-head">
           <span>CLI System Tools</span>
           <span class="status">PLANNED</span>
         </div>
-        <p>Быстрые консольные тулзы на Rust для повседневной работы в Linux и NixOS.</p>
+        <p>Fast, zero-bloat terminal utilities written in Rust for daily Linux & NixOS workflows.</p>
       </div>
     </div>
 
     <!-- 3. Contacts -->
-    <div class="card" data-slot="2">
+    <div class="card">
       <div class="card-top">
         <span>03 // NETWORK</span>
         <span class="tag">CONTACTS</span>
@@ -451,13 +460,13 @@
       </div>
     </div>
 
-    <!-- 4. Tech Stack -->
-    <div class="card" data-slot="3">
+    <!-- 4. Environment -->
+    <div class="card">
       <div class="card-top">
         <span>04 // ENVIRONMENT</span>
         <span class="tag">STACK</span>
       </div>
-      <p>Инструменты и технологии, которые изучаю и использую:</p>
+      <p>Core technologies & tools I use and learn:</p>
       <div class="chips">
         <span class="chip">Rust</span>
         <span class="chip">Wayland</span>
@@ -469,8 +478,8 @@
       </div>
     </div>
 
-    <!-- 5. Hall of Fame / Respect -->
-    <div class="card" data-slot="4">
+    <!-- 5. Hall of Fame -->
+    <div class="card">
       <div class="card-top">
         <span>05 // HALL OF FAME</span>
         <span class="tag">RESPECT</span>
@@ -478,68 +487,60 @@
       <div class="box">
         <div class="box-head">
           <span>★ Tup1sm</span>
-          <span class="status">RESPECT</span>
+          <span class="status">CONTRIBUTION</span>
         </div>
-        <p>Большой вклад и помощь на старте пути.</p>
+        <p>Huge respect for constant support, ideas, and real contribution to my dev journey.</p>
       </div>
       <div class="box">
         <div class="box-head">
           <span>★ sapphirexd</span>
           <span class="status">RESPECT</span>
         </div>
-        <p>Поддержка, советы и помощь в развитии.</p>
+        <p>Always backing up the grind and helping push projects forward.</p>
       </div>
     </div>
 
-    <!-- 6. Inner Circle / Close Friends -->
-    <div class="card" data-slot="5">
+    <!-- 6. Inner Circle -->
+    <div class="card">
       <div class="card-top">
         <span>06 // INNER CIRCLE</span>
         <span class="tag">CLOSE FRIENDS</span>
       </div>
-      <p style="margin-bottom: 10px;">Те, кто всегда рядом, помогает с мыслями и поддерживает мой путь:</p>
-      <div class="box">
-        <div class="box-head">
-          <span>◆ Tup1sm</span>
-          <span class="status">DAY ONE</span>
-        </div>
-      </div>
-      <div class="box">
-        <div class="box-head">
-          <span>◆ voxelsy</span>
-          <span class="status">BRO</span>
-        </div>
-      </div>
-      <div class="box">
-        <div class="box-head">
-          <span>◆ sapphirexd</span>
-          <span class="status">BRO</span>
-        </div>
+      <p style="margin-bottom: 10px;">People who stay by my side, help with thoughts, and support my path:</p>
+      <div class="chips">
+        <span class="chip">★ Tup1sm</span>
+        <span class="chip">★ voxelsy</span>
+        <span class="chip">★ sapphirexd</span>
       </div>
     </div>
   </div>
 
-  <!-- Terminal -->
+  <!-- Bottom Terminal -->
   <div class="terminal">
     <div class="term-log" id="log">
-      wlwm-shell v0.5 // Введи <span style="color:var(--accent-light)">help</span> или <span style="color:var(--accent-light)">fastfetch</span>. Колёсико — зум, ЛКМ — двигать холст и окна.
+      wlwm-shell // Type <span style="color:var(--accent-light)">help</span> or <span style="color:var(--accent-light)">fastfetch</span>. Drag canvas or pinch to zoom.
     </div>
     <div class="term-row">
       <span class="prompt">d3sydev@nixos:~$</span>
-      <input type="text" id="cmd" placeholder="введи команду..." autocomplete="off" />
+      <input type="text" id="cmd" placeholder="type command..." autocomplete="off" />
     </div>
   </div>
 
   <script>
-    // 1. Auto-arrange cards cleanly without overlapping
     const cards = document.querySelectorAll('.card');
+    const world = document.getElementById('world');
+    const bg = document.getElementById('grid-bg');
+    const hudInfo = document.getElementById('hud-info');
+
+    // 1. Responsive Auto-Arrange
     function arrangeCards() {
-      const gap = 24;
-      const cardW = 340;
-      const cols = window.innerWidth > 1150 ? 3 : (window.innerWidth > 760 ? 2 : 1);
+      const isMobile = window.innerWidth <= 650;
+      const gap = isMobile ? 16 : 24;
+      const cardW = isMobile ? Math.min(340, window.innerWidth * 0.88) : 340;
+      const cols = window.innerWidth > 1150 ? 3 : (window.innerWidth > 740 ? 2 : 1);
       const totalW = cols * cardW + (cols - 1) * gap;
-      const startX = Math.max(24, (window.innerWidth - totalW) / 2);
-      const startY = 82;
+      const startX = Math.max(16, (window.innerWidth - totalW) / 2);
+      const startY = isMobile ? 64 : 78;
 
       const colHeights = new Array(cols).fill(startY);
 
@@ -552,17 +553,17 @@
     }
     window.addEventListener('load', arrangeCards);
 
-    // 2. Theme Toggle
+    // 2. Theme Switcher
     let yellowMode = false;
     function switchTheme() {
       yellowMode = !yellowMode;
       const btn = document.getElementById('theme-btn');
       if (yellowMode) {
         document.documentElement.setAttribute('data-theme', 'yellow');
-        btn.textContent = 'Theme: Yellow White';
+        btn.textContent = 'Yellow White';
       } else {
         document.documentElement.removeAttribute('data-theme');
-        btn.textContent = 'Theme: Dark Blue';
+        btn.textContent = 'Dark Blue';
       }
     }
 
@@ -570,24 +571,22 @@
     function copyDC() {
       navigator.clipboard.writeText('d3sydev');
       const el = document.getElementById('dc-text');
-      el.textContent = 'Скопировано!';
+      el.textContent = 'Copied!';
       setTimeout(() => el.textContent = '@d3sydev (copy)', 1500);
     }
 
-    // 4. Infinite Canvas Pan & Wheel Zoom
-    const world = document.getElementById('world');
-    const bg = document.getElementById('grid-bg');
-    const hudInfo = document.getElementById('hud-info');
-
+    // 4. Camera Pan & Zoom (Mouse + Touch)
     let camX = 0, camY = 0, scale = 1;
     let panning = false, startPanX = 0, startPanY = 0;
+    let draggedCard = null, dragStartX = 0, dragStartY = 0, cardStartLeft = 0, cardStartTop = 0, zTop = 20;
+    let initialPinchDist = 0, initialScale = 1;
 
     function updateCamera() {
       world.style.transform = `translate(${camX}px, ${camY}px) scale(${scale})`;
       const gridSize = 40 * scale;
       bg.style.backgroundSize = `100% 100%, ${gridSize}px ${gridSize}px, ${gridSize}px ${gridSize}px`;
       bg.style.backgroundPosition = `center, ${camX}px ${camY}px, ${camX}px ${camY}px`;
-      hudInfo.textContent = `${Math.round(scale * 100)}% | X: ${Math.round(camX)} Y: ${Math.round(camY)}`;
+      hudInfo.textContent = `${Math.round(scale * 100)}%`;
     }
 
     function resetCamera() {
@@ -597,43 +596,11 @@
       updateCamera();
     }
 
+    // Mouse Events
     document.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.card') || e.target.closest('.hud') || e.target.closest('.terminal')) return;
-      panning = true;
-      document.body.classList.add('grabbing');
-      startPanX = e.clientX - camX;
-      startPanY = e.clientY - camY;
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!panning) return;
-      camX = e.clientX - startPanX;
-      camY = e.clientY - startPanY;
-      updateCamera();
-    });
-
-    document.addEventListener('mouseup', () => {
-      panning = false;
-      document.body.classList.remove('grabbing');
-    });
-
-    document.addEventListener('wheel', (e) => {
-      if (e.target.closest('.term-log')) return;
-      e.preventDefault();
-      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-      const newScale = Math.min(Math.max(scale * zoomFactor, 0.45), 2.2);
-
-      camX = e.clientX - (e.clientX - camX) * (newScale / scale);
-      camY = e.clientY - (e.clientY - camY) * (newScale / scale);
-      scale = newScale;
-      updateCamera();
-    }, { passive: false });
-
-    // 5. Drag Cards (Zoom-aware)
-    let draggedCard = null, dragStartX = 0, dragStartY = 0, cardStartLeft = 0, cardStartTop = 0, zTop = 20;
-
-    cards.forEach(card => {
-      card.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.hud') || e.target.closest('.terminal')) return;
+      const card = e.target.closest('.card');
+      if (card) {
         if (e.target.closest('a') || e.target.closest('.link-btn')) return;
         draggedCard = card;
         zTop++;
@@ -642,22 +609,116 @@
         dragStartY = e.clientY;
         cardStartLeft = parseFloat(card.style.left) || 0;
         cardStartTop = parseFloat(card.style.top) || 0;
-      });
+      } else {
+        panning = true;
+        document.body.classList.add('grabbing');
+        startPanX = e.clientX - camX;
+        startPanY = e.clientY - camY;
+      }
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (!draggedCard) return;
-      const dx = (e.clientX - dragStartX) / scale;
-      const dy = (e.clientY - dragStartY) / scale;
-      draggedCard.style.left = `${cardStartLeft + dx}px`;
-      draggedCard.style.top = `${cardStartTop + dy}px`;
+      addTrailPoint(e.clientX, e.clientY);
+      if (draggedCard) {
+        draggedCard.style.left = `${cardStartLeft + (e.clientX - dragStartX) / scale}px`;
+        draggedCard.style.top = `${cardStartTop + (e.clientY - dragStartY) / scale}px`;
+      } else if (panning) {
+        camX = e.clientX - startPanX;
+        camY = e.clientY - startPanY;
+        updateCamera();
+      }
     });
 
     document.addEventListener('mouseup', () => {
+      panning = false;
       draggedCard = null;
+      document.body.classList.remove('grabbing');
     });
 
-    // 6. Smooth Cursor Trail
+    document.addEventListener('wheel', (e) => {
+      if (e.target.closest('.term-log')) return;
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      const newScale = Math.min(Math.max(scale * zoomFactor, 0.4), 2.2);
+      camX = e.clientX - (e.clientX - camX) * (newScale / scale);
+      camY = e.clientY - (e.clientY - camY) * (newScale / scale);
+      scale = newScale;
+      updateCamera();
+    }, { passive: false });
+
+    // Touch Events (Mobile Support)
+    function getTouchDist(t1, t2) {
+      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    }
+
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.hud') || e.target.closest('.terminal')) return;
+
+      if (e.touches.length === 2) {
+        panning = false;
+        draggedCard = null;
+        initialPinchDist = getTouchDist(e.touches[0], e.touches[1]);
+        initialScale = scale;
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        addTrailPoint(t.clientX, t.clientY);
+        const card = e.target.closest('.card');
+        if (card && !e.target.closest('a') && !e.target.closest('.link-btn')) {
+          draggedCard = card;
+          zTop++;
+          card.style.zIndex = zTop;
+          dragStartX = t.clientX;
+          dragStartY = t.clientY;
+          cardStartLeft = parseFloat(card.style.left) || 0;
+          cardStartTop = parseFloat(card.style.top) || 0;
+        } else if (!card) {
+          panning = true;
+          startPanX = t.clientX - camX;
+          startPanY = t.clientY - camY;
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (e.target.closest('.term-log')) return;
+
+      if (e.touches.length === 2 && initialPinchDist > 0) {
+        const dist = getTouchDist(e.touches[0], e.touches[1]);
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const newScale = Math.min(Math.max(initialScale * (dist / initialPinchDist), 0.4), 2.2);
+
+        camX = midX - (midX - camX) * (newScale / scale);
+        camY = midY - (midY - camY) * (newScale / scale);
+        scale = newScale;
+        updateCamera();
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        addTrailPoint(t.clientX, t.clientY);
+        if (draggedCard) {
+          draggedCard.style.left = `${cardStartLeft + (t.clientX - dragStartX) / scale}px`;
+          draggedCard.style.top = `${cardStartTop + (t.clientY - dragStartY) / scale}px`;
+        } else if (panning) {
+          camX = t.clientX - startPanX;
+          camY = t.clientY - startPanY;
+          updateCamera();
+        }
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      panning = false;
+      draggedCard = null;
+      initialPinchDist = 0;
+    });
+
+    // 5. Smooth Cursor / Finger Trail
     const trailCanvas = document.getElementById('trail');
     const ctx = trailCanvas.getContext('2d');
     const trailPoints = [];
@@ -669,9 +730,9 @@
     window.addEventListener('resize', fitTrail);
     fitTrail();
 
-    window.addEventListener('mousemove', (e) => {
-      trailPoints.push({ x: e.clientX, y: e.clientY, life: 1 });
-    });
+    function addTrailPoint(x, y) {
+      trailPoints.push({ x, y, life: 1 });
+    }
 
     function renderTrail() {
       ctx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
@@ -700,38 +761,26 @@
     }
     renderTrail();
 
-    // 7. Terminal Commands
+    // 6. Terminal Commands
     const cmd = document.getElementById('cmd');
     const log = document.getElementById('log');
 
-    const fastfetchHTML = `
-      <div class="ff-wrap">
-        <div class="ff-art">██████╗ 
-██╔══██╗
-██║  ██║
-██║  ██║
-██████╔╝
-╚═════╝ </div>
-        <div class="ff-info">
-          <div><span class="ff-key">d3sydev@nixos</span></div>
-          <div>--------------</div>
-          <div><span class="ff-key">OS:</span> NixOS (Target)</div>
-          <div><span class="ff-key">WM:</span> wlwm (Planned)</div>
-          <div><span class="ff-key">Editor:</span> Zed</div>
-          <div><span class="ff-key">Langs:</span> Rust, C</div>
-        </div>
-      </div>
-    `;
+    const fastfetchArt = `<pre>██████╗ 
+██╔══██╗  d3sydev@nixos
+██║  ██║  ─────────────
+██║  ██║  OS: NixOS (Target)
+██████╔╝  WM: wlwm (Wayland)
+╚═════╝   Editor: Zed | Langs: Rust, C</pre>`;
 
     const cmds = {
-      help: 'Команды: <span style="color:var(--accent-light)">fastfetch</span>, <span style="color:var(--accent-light)">whoami</span>, <span style="color:var(--accent-light)">projects</span>, <span style="color:var(--accent-light)">socials</span>, <span style="color:var(--accent-light)">friends</span>, <span style="color:var(--accent-light)">honor</span>, <span style="color:var(--accent-light)">theme</span>, <span style="color:var(--accent-light)">reset</span>, <span style="color:var(--accent-light)">clear</span>',
-      whoami: 'D3syDev (Даниил Вавилов, 16) — Rust & Wayland разработчик.',
-      projects: 'wlwm (Wayland Infinite Canvas WM — в планах) и консольные тулзы на Rust.',
-      socials: 'GitHub: <a href="https://github.com/d3sydev" target="_blank" style="color:var(--accent-light)">github.com/d3sydev</a> | Telegram: <a href="https://t.me/d3sydev" target="_blank" style="color:var(--accent-light)">t.me/d3sydev</a> | Discord: <span style="color:var(--accent-light)">@d3sydev</span>',
-      friends: 'Близкие кенты: Tup1sm, voxelsy, sb0ne, sapphirexd.',
-      honor: 'Respect: Tup1sm, sapphirexd — спасибо за вклад и поддержку!',
-      theme: 'Тема переключена.',
-      reset: 'Камера и карточки возвращены в исходное положение.'
+      help: 'Commands: <span style="color:var(--accent-light)">whoami</span>, <span style="color:var(--accent-light)">fastfetch</span>, <span style="color:var(--accent-light)">projects</span>, <span style="color:var(--accent-light)">socials</span>, <span style="color:var(--accent-light)">friends</span>, <span style="color:var(--accent-light)">theme</span>, <span style="color:var(--accent-light)">reset</span>, <span style="color:var(--accent-light)">clear</span>',
+      whoami: 'D3syDev (Daniil Vavilov, 16) — Rust & Wayland developer.',
+      fastfetch: fastfetchArt,
+      projects: '1. wlwm (Wayland Infinite Canvas WM — Planned) | 2. Rust CLI Tools.',
+      socials: 'GitHub: <a href="https://github.com/d3sydev" target="_blank" style="color:var(--accent-light)">@d3sydev</a> | Telegram: <a href="https://t.me/d3sydev" target="_blank" style="color:var(--accent-light)">@d3sydev</a> | Discord: @d3sydev',
+      friends: 'Close Friends: Tup1sm, voxelsy, sapphirexd | Respect: Tup1sm, sapphirexd',
+      theme: 'Theme switched.',
+      reset: 'Camera & grid reset.'
     };
 
     cmd.addEventListener('keydown', (e) => {
@@ -743,14 +792,8 @@
       if (val === 'theme') switchTheme();
       if (val === 'reset') { resetCamera(); arrangeCards(); }
 
-      if (val === 'fastfetch') {
-        log.innerHTML += `<div><span style="color:var(--accent-light)">$ fastfetch</span></div>${fastfetchHTML}`;
-        log.scrollTop = log.scrollHeight;
-        return;
-      }
-
-      const ans = cmds[val] || `Неизвестная команда: ${val}. Напиши <span style="color:var(--accent-light)">help</span>.`;
-      log.innerHTML += `<div><span style="color:var(--accent-light)">$ ${val}</span> — ${ans}</div>`;
+      const ans = cmds[val] || `Command not found: ${val}. Type <span style="color:var(--accent-light)">help</span>.`;
+      log.innerHTML += `<div><span style="color:var(--accent-light)">$ ${val}</span> ${val === 'fastfetch' ? '' : '—'} ${ans}</div>`;
       log.scrollTop = log.scrollHeight;
     });
   </script>
